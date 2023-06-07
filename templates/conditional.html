@@ -1,0 +1,44 @@
+<!-- create a form with headings for contains and string length post to endpoint /submit-form with form values-->
+<!-- also send user_id > passed in as {{ user_id }}-->
+<div>
+    <form action="/submit-form" method="post">
+        <h3>Contains</h3>
+        <input type="text" name="contains" placeholder="contains">
+        <h3>String Max Length</h3>
+        <input type="text" name="max" placeholder="max">
+        <h3>String Min Length</h3>
+        <input type="text" name="min" placeholder="min">
+        <input type="hidden" name="user_id" value="{{ user_id }}">
+        <input type="submit" value="Submit">
+    </form>
+</div>
+
+<script>
+    // submit form with fetch
+    const form = document.querySelector('form');
+    form.addEventListener('submit', e => {
+        e.preventDefault();
+        const formData = new FormData(form);
+        // turn form into json
+        const data = {};
+        for (let [key, value] of formData.entries()) {
+            data[key] = value;
+        }
+        console.log(data);
+        // post to endpoint
+        fetch('/submit-form', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data),
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success:', data);
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+    });
+</script>

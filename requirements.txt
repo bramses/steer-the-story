@@ -1,0 +1,12 @@
+fastapi==0.96.0
+Flask==2.3.2
+flask_cors==3.0.10
+pycryptodome==3.18.0
+pydantic==1.9.1
+pydantic==1.10.8
+python-dotenv==1.0.0
+PyYAML==6.0
+PyYAML==6.0
+redis==4.5.5
+Requests==2.31.0
+uvicorn==0.17.6
