@@ -5,9 +5,9 @@
         <h3>Contains</h3>
         <input type="text" name="contains" placeholder="contains">
         <h3>String Max Length</h3>
-        <input type="text" name="max" placeholder="max">
+        <input type="text" name="max" placeholder="max"><span id="maxError" style="color:red;"></span>
         <h3>String Min Length</h3>
-        <input type="text" name="min" placeholder="min">
+        <input type="text" name="min" placeholder="min"><span id="minError" style="color:red;"></span>
         <input type="hidden" name="user_id" value="{{ user_id }}">
         <input type="submit" value="Submit">
     </form>
@@ -16,6 +16,30 @@
 <script>
     // submit form with fetch
     const form = document.querySelector('form');
+    const maxError = document.getElementById('maxError');
+    const minError = document.getElementById('minError');
+
+    // https://chat.openai.com/share/98af1663-a37f-4626-8405-d3dcc889bd84
+    // Function to validate min and max are numbers
+    const validateMinMax = (min, max) => {
+        let isValid = true;
+        if(isNaN(min) || min.length == 0){
+            minError.innerText = "Min must be a valid number";
+            isValid = false;
+        } else {
+            minError.innerText = "";
+        }
+
+        if(isNaN(max) || max.length == 0){
+            maxError.innerText = "Max must be a valid number";
+            isValid = false;
+        } else {
+            maxError.innerText = "";
+        }
+
+        return isValid;
+    }
+
     form.addEventListener('submit', e => {
         e.preventDefault();
         const formData = new FormData(form);
@@ -24,6 +48,12 @@
         for (let [key, value] of formData.entries()) {
             data[key] = value;
         }
+        
+        // If min or max are not valid numbers, return and do not fetch
+        if (!validateMinMax(data.min, data.max)) {
+            return;
+        }
+        
         console.log(data);
         // post to endpoint
         fetch('/submit-form', {
