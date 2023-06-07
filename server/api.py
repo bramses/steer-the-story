@@ -12,7 +12,7 @@ from Crypto.Random import get_random_bytes
 import base64
 import redis
 import json
-import error_wrap
+from gpt_error import gpt_error
 
 
 # load .env file from root directory ../
@@ -22,10 +22,6 @@ dotenv.load_dotenv(
 
 
 import uuid
-# from auth import get_api_key
-
-
-
 from pydantic import BaseModel
 
 class ConditionalModel(BaseModel):
@@ -123,55 +119,52 @@ async def redis_keys():
 <!-- create a form with headings for contains and string length post to endpoint /submit-form with form values-->
 '''
 @app.post("/submit-form")
+@gpt_error
 async def submit_form(form_results: ConditionalModel):
-    try:
-        user_id = form_results.user_id
-        r.set(user_id, json.dumps(form_results.dict()))
-        return True
-    except Exception as e:
-        prompt = error_wrap.wrap_error(e)
-        potential_fix = await error_wrap.run_chat_prompt(prompt)
-        print(potential_fix)
-        return {"error": str(e), "potential_fix": potential_fix}
+    user_id = form_results.user_id
+    r.set(user_id, json.dumps(form_results.dict()))
+    return {"success": True}
+    
+    
 
-
+@gpt_error
 async def check_conditions(testStr, conditions):
-    try:
-        # Check if length condition exists and is satisfied
-        if 'min' in conditions:
-            if len(testStr) < conditions['min']:
-                return False
-            
-        if 'max' in conditions:
-            if len(testStr) > conditions['max']:
-                return False
-    
-        # Check if contains condition exists and is satisfied
-        if 'contains' in conditions:
-            if conditions['contains'] not in testStr:
-                return False
-    
-        # If all conditions are satisfied
-        return True
-    except Exception as e:
-        prompt = error_wrap.wrap_error(e)
-        potential_fix = await error_wrap.run_chat_prompt(prompt)
-        return {"error": str(e), "potential_fix": potential_fix}
+    # Check if length condition exists and is satisfied
+    if 'min' in conditions:
+        if len(testStr) < conditions['min']:
+            return False
+        
+    if 'max' in conditions:
+        if len(testStr) > conditions['max']:
+            return False
+
+    # Check if contains condition exists and is satisfied
+    if 'contains' in conditions:
+        if conditions['contains'] not in testStr:
+            return False
+
+    # If all conditions are satisfied
+    return True
+    # except Exception as e:
+    #     prompt = error_wrap.wrap_error(e)
+    #     potential_fix = await error_wrap.run_chat_prompt(prompt)
+    #     return {"error": str(e), "potential_fix": potential_fix}
     
 
 
 @app.post("/validate-conditions/{testStr}", tags=["uses-user-id"])
+@gpt_error
 async def validate_conditions(user_id: str, testStr: str):
-    try:
-        # Get the conditions for the user
-        user_conditions = json.loads(r.get(user_id))
-        # Check if the conditions are satisfied
-        return await check_conditions(testStr, user_conditions)
-    except Exception as e:
-        prompt = error_wrap.wrap_error(e)
-        potential_fix = await error_wrap.run_chat_prompt(prompt)
-        print(potential_fix)
-        return {"error": str(e), "potential_fix": potential_fix}
+    
+    # Get the conditions for the user
+    user_conditions = json.loads(r.get(user_id))
+    # Check if the conditions are satisfied
+    return await check_conditions(testStr, user_conditions)
+    # except Exception as e:
+    #     prompt = error_wrap.wrap_error(e)
+    #     potential_fix = await error_wrap.run_chat_prompt(prompt)
+    #     print(potential_fix)
+    #     return {"error": str(e), "potential_fix": potential_fix}
 
 
 def custom_openapi():
