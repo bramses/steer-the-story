@@ -12,17 +12,8 @@ from Crypto.Random import get_random_bytes
 import base64
 import redis
 import json
-import traceback
 import error_wrap
 
-import sys
-
-def run_function_on_error(exc_type, exc_value, exc_traceback):
-    # Define the function you want to run when an error occurs
-    print("An error occurred!")
-
-# Override the default excepthook with your custom function
-sys.excepthook = run_function_on_error
 
 # load .env file from root directory ../
 dotenv.load_dotenv(
@@ -33,8 +24,7 @@ dotenv.load_dotenv(
 import uuid
 # from auth import get_api_key
 
-# Creating a connection to Redis
-r = redis.Redis(username=os.getenv("REDIS_USERNAME"), host=os.getenv("REDIS_HOST"), password=os.getenv("REDIS_PW"), port=6379, db=0, decode_responses=True, ssl=True)
+
 
 from pydantic import BaseModel
 
@@ -79,8 +69,11 @@ IS_PROD = os.getenv("PROD") == "true"
 
 if IS_PROD:
     BASE_URL = PROD_URL
+    # Creating a connection to Redis
+    r = redis.Redis(username=os.getenv("REDIS_USERNAME"), host=os.getenv("REDIS_HOST"), password=os.getenv("REDIS_PW"), port=6379, db=0, decode_responses=True, ssl=True)
 else:
     BASE_URL = LOCAL_URL
+    r = redis.Redis(host="localhost", port=6379, db=0, decode_responses=True)
 
 @app.get("/get_unique_url/")
 async def get_unique_url(request: Request):
@@ -132,44 +125,51 @@ async def redis_keys():
 @app.post("/submit-form")
 async def submit_form(form_results: ConditionalModel):
     try:
-        print(form_results)
         user_id = form_results.user_id
-        r.set(user_id, json.dumps(form_results))
-        r.expire(user_id, 60*60*24*7) # expire in 7 days
-        return {"form_results": form_results}
+        r.set(user_id, json.dumps(form_results.dict()))
+        return True
     except Exception as e:
         prompt = error_wrap.wrap_error(e)
         potential_fix = await error_wrap.run_chat_prompt(prompt)
         return {"error": str(e), "potential_fix": potential_fix}
 
 
-
-
-def check_conditions(testStr, conditions):
-    # Check if length condition exists and is satisfied
-    if 'min' in conditions:
-        if len(testStr) < conditions['min']:
-            return False
-        
-    if 'max' in conditions:
-        if len(testStr) > conditions['max']:
-            return False
-
-    # Check if contains condition exists and is satisfied
-    if 'contains' in conditions:
-        if conditions['contains'] not in testStr:
-            return False
-
-    # If all conditions are satisfied
-    return True
+async def check_conditions(testStr, conditions):
+    try:
+        # Check if length condition exists and is satisfied
+        if 'min' in conditions:
+            if len(testStr) < conditions['min']:
+                return False
+            
+        if 'max' in conditions:
+            if len(testStr) > conditions['max']:
+                return False
+    
+        # Check if contains condition exists and is satisfied
+        if 'contains' in conditions:
+            if conditions['contains'] not in testStr:
+                return False
+    
+        # If all conditions are satisfied
+        return True
+    except Exception as e:
+        prompt = error_wrap.wrap_error(e)
+        potential_fix = await error_wrap.run_chat_prompt(prompt)
+        return {"error": str(e), "potential_fix": potential_fix}
+    
 
 
 @app.post("/validate-conditions/{testStr}", tags=["uses-user-id"])
 async def validate_conditions(user_id: str, testStr: str):
-    # Get the conditions for the user
-    user_conditions = json.loads(r.get(user_id))
-    # Check if the conditions are satisfied
-    return check_conditions(testStr, user_conditions)
+    try:
+        # Get the conditions for the user
+        user_conditions = json.loads(r.get(user_id))
+        # Check if the conditions are satisfied
+        return await check_conditions(testStr, user_conditions)
+    except Exception as e:
+        prompt = error_wrap.wrap_error(e)
+        potential_fix = await error_wrap.run_chat_prompt(prompt)
+        return {"error": str(e), "potential_fix": potential_fix}
 
 
 def custom_openapi():

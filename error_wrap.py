@@ -45,21 +45,3 @@ def wrap_error(e: Exception, description: str = None):
     print(error_message)
 
     return error_message
-
-def wrap_error_json(e: Exception, description: str = None):
-
-
-    exc_type, exc_value, exc_traceback = sys.exc_info()
-
-    filename = exc_traceback.tb_frame.f_code.co_filename
-
-    line_number = exc_traceback.tb_lineno
-
-    func_name = exc_traceback.tb_frame.f_code.co_name
-
-    error_message = f"This error message occurred because of '{str(e)}' at line {line_number} in file {filename}, function {func_name}. The exception type is {exc_type}. The exception value is {exc_value}."
-    if description:
-        error_message += f'Other details: {description}'
-    print(error_message)
-
-    return json.dumps({"error": error_message})
