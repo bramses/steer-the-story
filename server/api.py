@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Request, Form, Depends, Response
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, PlainTextResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.openapi.utils import get_openapi
 from fastapi.middleware.cors import CORSMiddleware
@@ -131,6 +131,7 @@ async def submit_form(form_results: ConditionalModel):
     except Exception as e:
         prompt = error_wrap.wrap_error(e)
         potential_fix = await error_wrap.run_chat_prompt(prompt)
+        print(potential_fix)
         return {"error": str(e), "potential_fix": potential_fix}
 
 
@@ -169,6 +170,7 @@ async def validate_conditions(user_id: str, testStr: str):
     except Exception as e:
         prompt = error_wrap.wrap_error(e)
         potential_fix = await error_wrap.run_chat_prompt(prompt)
+        print(potential_fix)
         return {"error": str(e), "potential_fix": potential_fix}
 
 

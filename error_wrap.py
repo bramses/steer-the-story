@@ -39,9 +39,10 @@ def wrap_error(e: Exception, description: str = None):
     # Get and print the source code of the function
     func_code = inspect.getsource(function_obj)
 
-    error_message = f"This error message occurred because of '{str(e)}' at line {line_number} in file {filename}, function {func_name}. The exception type is {exc_type}. The function is: ```\n{func_code}\n```\n\n How do I fix this?"
+    error_message = f"This error message occurred because of '{str(e)}' at line {line_number} in file {filename}, function {func_name}. The exception type is {exc_type}. The function is: \n\n```python\n{func_code}\n```\n\nHow do I fix this?"
     if description:
         error_message += f'Other details: {description}'
-    print(error_message)
+
+    print(error_message + '\n\n')
 
     return error_message
