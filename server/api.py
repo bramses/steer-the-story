@@ -132,19 +132,19 @@ async def check_conditions(testStr, conditions):
     # Check if length condition exists and is satisfied
     if 'min' in conditions:
         if len(testStr) < conditions['min']:
-            return False
+            return f"Does not meet min length of {conditions['min']} characters. Current length: {len(testStr)}"
         
     if 'max' in conditions:
         if len(testStr) > conditions['max']:
-            return False
+            return f"Exceeds max length of {conditions['max']} characters. Current length: {len(testStr)}"
 
-    # Check if contains condition exists and is satisfied
+    # Check if contains condition exists and is satisfied -- compare lowercase
     if 'contains' in conditions:
-        if conditions['contains'] not in testStr:
-            return False
+        if conditions['contains'].lower() not in testStr.lower():
+            return f"Does not contain {conditions['contains']}"
 
     # If all conditions are satisfied
-    return True
+    return "valid"
     # except Exception as e:
     #     prompt = error_wrap.wrap_error(e)
     #     potential_fix = await error_wrap.run_chat_prompt(prompt)
